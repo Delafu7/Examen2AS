@@ -1,25 +1,62 @@
 # Examen2AS
 
-
 ## Índice del repositorio
 
 - [Dockerfile](#dockerfile)
   - [Estructura básica de un Dockerfile](#estructura-básica-de-un-dockerfile)
   - [Instrucciones más importantes de Dockerfile](#instrucciones-más-importantes-de-dockerfile)
   - [Comandos básicos relacionados](#comandos-básicos-relacionados)
+
 - [Docker Compose](#docker-compose)
   - [Comandos básicos de Docker Compose](#comandos-básicos-de-docker-compose)
   - [Ejemplo típico de docker-compose.yml](#ejemplo-típico-de-docker-composeyml)
-- [Kubernetes](#kubernetes)
+
+- [Kubernettes](#kubernettes)
   - [Ejemplo típico: Deployment + Service](#ejemplo-típico-deployment--service)
   - [Explicación de los elementos clave](#explicación-de-los-elementos-clave)
   - [Comandos útiles](#comandos-útiles)
   - [Resumen](#resumen)
+
 - [CI/CD](#cicd)
+  - [Ejemplo básico de workflow](#ejemplo-básico-de-workflow)
+  - [Estructura de un workflow](#estructura-de-un-workflow)
+  - [Workflows con múltiples jobs](#workflows-con-múltiples-jobs)
+  - [Filtrar por ramas](#filtrar-por-ramas)
+  - [Ejecutar en múltiples sistemas operativos](#ejecutar-en-múltiples-sistemas-operativos)
+  - [GitHub Marketplace](#github-marketplace)
+  - [Secretos en GitHub Actions](#secretos-en-github-actions)
+  - [Ejercicios](#ejercicios)
+    - [Ejercicio 1](#ejercicio1)
+    - [Ejercicio 2](#ejercicio2)
+    - [Ejercicio 3](#ejercicio3)
+
 - [Cloud Computing](#cloud-computing)
+  - [Tipos de auto-escalado](#tipos-de-auto-escalado)
+  - [Auto-escalado horizontal (HPA)](#auto-escalado-horizontal-hpa)
+  - [Auto-escalado vertical (VPA)](#auto-escalado-vertical-vpa)
+  - [Métricas en Kubernetes](#métricas-en-kubernetes)
+
 - [Elasticsearch](#elasticsearch)
+  - [Mapping](#mapping)
+  - [Operaciones CRUD (API REST)](#operaciones-crud-api-rest)
+  - [Ejercicios](#ejercicios-1)
+    - [Ejercicio 1](#ejercicio-1)
+    - [Ejercicio 2](#ejercicio-2)
+    - [Ejercicios de paginación](#ejercicios-paginación)
+    - [Ejercicios de ordenación](#ejercicios-de-ordenación)
+    - [Ejercicios de filtros](#ejercicios-de-filtros)
+    - [Ejercicios de búsquedas difusas](#ejercicios-de-búsquedas-difusas)
+    - [Ejercicios de prefijos de búsqueda y comodines](#ejercios-de-prefijos-de-busqueda-y-comodines)
+    - [Ejercicios de expresiones regulares](#ejercicios-de-expresiones-regulares)
+
 - [Pila ELK](#pila-elk)
-- [Ejercicios de prueba examen](#ejercicios-de-prueba-examen)
+
+- [Ejercicios de Prueba examen](#ejercicios-de-prueba-examen)
+  - [Ejercicio 1](#ejercicio1-1)
+  - [Ejercicio 2](#ejercicio2-1)
+  - [Ejercicio 3](#ejercicio3-1)
+
+---
 ## Dockerfile
 
 ### Estructura básica de un Dockerfile
@@ -168,7 +205,7 @@ volumes:
 | `volumes`     | Raíz           | Definición de volúmenes nombrados        |
 
 
-
+---
 
 ## Kubernettes
 
@@ -274,15 +311,780 @@ kubectl delete -f archivo.yml
 
 - kubectl get pods, kubectl get svc para ver el estado
 
-
+---
 ## CI/CD
 
+### Ejemplo básico de workflow
+
+```
+name: Primer workflow
+
+on: push
+
+jobs:
+  hola_mundo:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Mostrar mensaje
+        run: echo "Hola mundo"
+
+```
+
+### Estructura de un workflow
+
+| Elemento  | Descripción                  |
+| --------- | ---------------------------- |
+| `name`    | Nombre del workflow          |
+| `on`      | Evento que lo dispara        |
+| `jobs`    | Conjunto de tareas           |
+| `runs-on` | Sistema operativo del runner |
+| `steps`   | Pasos que se ejecutan        |
+
+
+### Workflows con múltiples jobs
+
+Se pueden definir dependencias entre jobs usando *needs*.
+
+
+```yml
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - run: pytest
+
+  build:
+    runs-on: ubuntu-latest
+    needs: test
+    steps:
+      - run: echo "Construyendo aplicación"
+
+```
+
+### Filtrar por ramas
+
+Ejecutar un workflow solo en determinadas ramas:
+
+```yml
+on:
+  push:
+    branches:
+      - main
+      - develop
+```
+
+### Ejecutar en múltiples sistemas operativos
+
+```yml
+jobs:
+  test:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+
+```
+
+### GitHub Marketplace
+
+GitHub ofrece un Marketplace con acciones reutilizables:
+
+- Construir imágenes Docker
+
+- Subir imágenes a Docker Hub
+
+- Análisis de código
+
+- Seguridad
+
+Ejemplo: construir y subir una imagen Docker
+
+```yml
+- name: Build and push
+  uses: docker/build-push-action@v6
+  with:
+    push: true
+    tags: usuario/miapp
+```
+
+### Secretos en GitHub Actions
+
+Para información sensible (tokens, contraseñas):
+
+- Se usan secrets
+
+- Se configuran en el repositorio
+
+- Se accede con ${{ secrets.NOMBRE }}
+
+Ejemplo:
+
+```yml
+- name: Login Docker Hub
+  uses: docker/login-action@v3
+  with:
+    username: ${{ secrets.DOCKERHUB_USERNAME }}
+    password: ${{ secrets.DOCKERHUB_TOKEN }}
+```
+
+### Ejercicios
+
+#### Ejercicio1
+
+Crear un workflow con los siguientes pasos:
+- Descargar el código.
+- Instalar pytest.
+- Utilizar pytest para ejecutar los Tests del código.
+- Verificar que el workflow finaliza correctamente.
+- Introducir un fallo en el código y comprobar el resultado
+del workflow
+
+```yml
+name: Python Tests
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v3
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.x'
+
+    - name: Install depencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install pytest
+
+    - name: Run tests
+      run: pytest test.py
+
+```
+
+#### Ejercicio2
+
+Crear un workflow que analice la calidad del código con
+la siguiente acción:
+- Nombre: advanced-security/python-lint-code-scanning-action@v1
+- Parámetros:
+  - linter: pylint
+  - Es necesario añadir el siguiente parámetro al workflow:
+
+      runs-on: …
+        permissions:
+          security-events: write
+      steps:
+- Comprobar el resultado.
+- Repositorio, sección “Seguridad”, apartado “Análisis de código”.
+
+
+**IMPORTANTE: El repositorio debe de ser público sino no se puede usar code scanning.**
+
+```yml
+name: Python Lint Code Scanning
+
+on:
+  pull_request:
+    branches: [ "main" ]
+
+permissions:
+  contents: read # Añade permisos de lectura de contenido para el checkout
+  security-events: write # Mantiene permisos de escritura para la acción de linting
+  actions: read # A veces es necesario para que las integraciones lean datos del workflow
+
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.MY_PAT}}
+          
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.x'
+
+      - name: Install dependencies
+        run: |
+          pip install pylint
+
+      - name: Run Python Lint Code Scanning
+        uses: advanced-security/python-lint-code-scanning-action@v1
+        with:
+          linter: pylint
+
+```
+
+#### Ejercicio3
+
+Crear 2 workflows:
+- 1) Se dispara al hacer Push en main, ejecuta los Tests como se describe en el ejercicio 1.
+- 2) Se dispara al hacer Pull Request en cualquier rama,ejecuta la acción Linter presentada en el ejercicio 2.
+
+Crear una nueva rama y añadir en el código:
+- Una función que incremente el saldo en 1000.
+- El Test correspondiente.
+- Hacer una Pull Request para juntar la rama con main.
+- Verificar que cada workflow se ha ejecutado correctamente.
+
+**pythonTest.yml:**
+
+```yml
+name: Python Tests
+on:
+  push:
+    branches: [ main ]
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v3
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.x'
+
+    - name: Install depencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install pytest
+
+    - name: Run tests
+      run: pytest test.py
+
+```
+
+**pylint.yml:**
+
+```yml
+name: Python Lint Code Scanning
+
+on:
+  pull_request:
+    branches: [ "main" ]
+
+permissions:
+  contents: read # Añade permisos de lectura de contenido para el checkout
+  security-events: write # Mantiene permisos de escritura para la acción de linting
+  actions: read # A veces es necesario para que las integraciones lean datos del workflow
+
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.MY_PAT}}
+          
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.x'
+
+      - name: Install dependencies
+        run: |
+          pip install pylint
+
+      - name: Run Python Lint Code Scanning
+        uses: advanced-security/python-lint-code-scanning-action@v1
+        with:
+          linter: pylint
+
+```
+---
 ## Cloud Computing
+
+### Tipos de auto-escalado
+
+| Tipo | Descripción |
+|----|-------------|
+| **Horizontal** | Añade o elimina recursos del mismo tipo |
+| **Vertical** | Aumenta o reduce la capacidad del recurso |
+
+### Auto-escalado horizontal (HPA)
+
+Controla automáticamente el número de pods de un Deployment.
+
+```yaml
+apiVersion: autoscaling/v1
+kind: HorizontalPodAutoscaler
+metadata:
+  name: mi-hpa
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: nginx
+  minReplicas: 1
+  maxReplicas: 10
+  targetCPUUtilizationPercentage: 50
+```
+Comandos útiles:
+
+```
+kubectl apply -f hpa.yaml
+kubectl get hpa
+kubectl describe hpa
+```
+
+### Auto-escalado vertical (VPA)
+
+Ajusta automáticamente CPU y memoria de los pods.
+
+```yml
+apiVersion: autoscaling.k8s.io/v1
+kind: VerticalPodAutoscaler
+metadata:
+  name: mi-vpa
+spec:
+  targetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: nginx-deployment
+  updatePolicy:
+    updateMode: Auto
+```
+
+Comandos útiles:
+
+```bash
+kubectl apply -f vpa.yaml
+kubectl get vpa
+kubectl describe vpa
+```
+
+### Métricas en Kubernetes
+
+```bash
+kubectl top pod
+kubectl top node
+```
+
+---
 
 ## Elasticsearch
 
+### Mapping
+
+- Define el esquema de los documentos de un índice.
+
+- Tipos de datos: text, integer, float, boolean, date, etc.
+
+- Elasticsearch puede inferirlos automáticamente
+
+- Se pueden definir manualmente
+
+Ejemplo:
+
+```json
+{
+  "mappings": {
+    "properties": {
+      "titulo": { "type": "text" },
+      "autor": { "type": "text" },
+      "isbn": { "type": "integer" }
+    }
+  }
+}
+
+```
+### Operaciones CRUD (API REST)
+
+| Operación  | Método REST |
+| ---------- | ----------- |
+| Crear      | POST / PUT  |
+| Leer       | GET         |
+| Actualizar | POST / PUT  |
+| Borrar     | DELETE      |
+
+### Ejercicios
+
+
+#### Ejercicio1
+Crear un índice “peliculas” con las siguientes características:
+- Campo “titulo”, tipo text.
+- Campo “director”, tipo text.
+- Campo “año”, tipo integer.
+
+TIPO : **PUT**
+
+URI:
+```
+http://localhost:9200/peliculas/
+```
+
+Cuerpo:
+```json
+{
+   "mappings": {
+    "properties": {
+      "titulo":   { "type": "text" },
+      "director": { "type": "text" },
+      "año":      { "type": "integer" }
+
+        }
+    }
+   }
+}
+```
+Modificar el campo “año” de Gladiator (ID = 2)
+
+TIPO : **POST**
+
+URI:
+```
+http://localhost:9200/peliculas/_update/2
+```
+
+Cuerpo:
+```json
+{
+  "doc": {
+    "año": 2000
+  }
+}
+
+```
+Borrar la película “Inception” (ID = 3)
+
+TIPO : **DELETE**
+
+URI:
+```
+http://localhost:9200/peliculas/_doc/2
+```
+
+Cuerpo: Nada
+
+#### Ejercicio 2
+
+- Crear un índice llamado “shakespeare”
+- Seguir el esquema de la diapositiva anterior.
+- Cargar el dataset de las obras de Shakespeare en el
+índice “shakespeare”.
+Encontrar:
+- A qué obra de Shakespeare pertenece la frase “To be or not to be” y en qué línea de la obra se encuentra.
+- Cuántas frases tiene el personaje "OCTAVIUS CAESAR" en la obra "Antony and Cleopatra”.
+
+
+Indice:
+
+TIPO : **PUT**
+
+URI:
+```
+http://localhost:9200/shakespeare
+```
+
+Cuerpo:
+```json
+{
+  "mappings": {
+    "properties": {
+      "speaker":        { "type": "keyword" },
+      "play_name":      { "type": "keyword" },
+      "line_id":        { "type": "integer" },
+      "speech_number":  { "type": "integer" }
+    }
+  }
+}
+
+
+```
+Cargar datos desde bin:
+
+
+TIPO : **POST**
+
+URI:
+```
+http://localhost:9200/shakespeare/_bulk
+```
+
+Buscar la frase “To be or not to be”:
+
+TIPO : **GET**
+
+URI:
+```
+http://localhost:9200/shakespeare/_search?pretty
+```
+
+Cuerpo:
+```json
+{
+  "query": {
+    "match_phrase": {
+      "text_entry": "To be or not to be"
+    }
+  }
+}
+
+```
+
+Contar cuántas frases dice “OCTAVIUS CAESAR” en “Antony and Cleopatra”
+
+TIPO : **GET**
+
+URI:
+```
+http://localhost:9200/shakespeare/_search?pretty
+```
+
+Cuerpo:
+```json
+{
+  "query": {
+    "bool": {
+      "must": [
+        { "term": { "speaker": "OCTAVIUS CAESAR" }},
+        { "term": { "play_name": "Antony and Cleopatra" }}
+      ]
+    }
+  }
+}
+
+
+```
+
+#### Ejercicios paginación
+
+- size → número de resultados que quieres devolver.
+- from → desplazamiento (offset), es decir, cuántos documentos saltarte antes de empezar a devolver resultados.
+
+**Recuperar los primeros 20 documentos del índice:**
+
+TIPO : **GET**
+
+URI:
+```
+http://localhost:9200/accounts/_search
+```
+
+Cuerpo:
+```json
+{
+  "size":20
+}
+
+```
+**Recuperar los segundos 20 documentos del índice**
+
+TIPO : **GET**
+
+URI:
+```
+http://localhost:9200/accounts/_search
+```
+
+Cuerpo:
+```json
+{
+  "from":20,
+  "size":20
+}
+
+```
+**Buscar las personas que residen en Texas (state = "TX") y devolver los primeros 15 resultados:**
+
+TIPO : **GET**
+
+URI:
+```
+http://localhost:9200/accounts/_search
+```
+
+```json
+{
+    "query":{
+        "term":{
+            "state":"TX"
+        }
+    },
+    "size": 15
+}
+```
+
+#### Ejercicios de Ordenación
+
+**Residentes en Los Ángeles (state = "LA") ordenados por edad ascendente:**
+
+
+TIPO : **GET**
+
+URI:
+```
+http://localhost:9200/accounts/_search
+```
+
+Cuerpo:
+```json
+{
+    "query":{
+        "term":{
+            "state":"LA"
+        }
+    },
+    "sort": [
+        {"age":{ "order" : "asc"}}
+    ]
+
+```
+
+#### Ejercicios de filtros
+
+
+** Recuperar los datos de usuarios cuyo estado de residencia sea Los Ángeles (código de estado “LA”) pero que su ciudad de residencia no sea Loretto, y que además su edad sea superior a los 33 años**
+
+TIPO : **GET**
+
+URI:
+```
+http://localhost:9200/accounts/_search
+```
+
+Cuerpo:
+```json
+{
+    "query":{
+        "bool": {
+            "filter":[
+                 {"term": {"state": "LA"}},
+                 { "range": {"age": {"gt":33}}}
+            ],
+            "must_not": [
+                {"term": {"city":"Loretto"}}
+            ]
+        }
+    }
+}
+
+```
+
+#### Ejercicios de búsquedas difusas
+
+** Utilizar una búsqueda difusa para recuperar los datos de la persona residente en Wyoming, pero utilizando ”Woyming” como término de búsqueda**
+
+TIPO : **GET**
+
+URI:
+```
+http://localhost:9200/accounts/_search
+```
+
+Cuerpo:
+```json
+{
+    "query":{
+        "fuzzy": {
+            "city":{
+                "value": "Woyming",
+                "fuzziness":1
+            }
+        }
+    }
+}
+
+```
+
+#### Ejercios de prefijos de busqueda y comodines
+
+- prefix query → para buscar términos que empiezan por un prefijo.
+- wildcard query → para buscar términos que cumplen un patrón con comodines (* = cualquier número de caracteres, ? = un solo carácter).
+
+**Recuperar los datos de las personas cuyos apellidos comiencen por “Mc”**
+
+TIPO : **GET**
+
+URI:
+```
+http://localhost:9200/accounts/_search
+```
+
+Cuerpo:
+```json
+{
+    "query":{
+        "prefix": {
+            "lastname": "Mc"
+        }
+    }
+}
+
+```
+
+
+**Recuperar los datos de las personas cuya ciudad de residencia comience por la letra “G” y acabe con “field”**
+
+TIPO : **GET**
+
+URI:
+```
+http://localhost:9200/accounts/_search
+```
+
+Cuerpo:
+```json
+{
+    "query":{
+        "wildcard": {
+            "city": "G*field"
+        }
+    }
+}
+
+```
+#### Ejercicios de expresiones regulares
+
+En Elasticsearch, las búsquedas con expresiones regulares se hacen con el operador regexp. Este permite definir patrones más complejos que los prefijos o comodines.
+
+
+**Utilizando expresiones regulares, recuperar los datos de las personas cuyo nombre de empleador comience por la letra "A" y esté compuesto por 4 o 5 letras, p.e. los empleadores "Avit" o "Amtap".**
+
+TIPO : **GET**
+
+URI:
+```
+http://localhost:9200/accounts/_search
+```
+
+Cuerpo:
+```json
+{
+    "query":{
+        "regexp": {
+            "employer": {
+                "value": "A.{3,4}"
+            }
+        }
+    }
+}
+
+
+```
+---
+
 ## Pila ELK
 
+---
 ## Ejercicios de Prueba examen
 
 ### Ejercicio1
