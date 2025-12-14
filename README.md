@@ -1,6 +1,9 @@
 # Examen2AS
 
+
 ## Índice del repositorio
+
+
 
 - [Dockerfile](#dockerfile)
   - [Estructura básica de un Dockerfile](#estructura-básica-de-un-dockerfile)
@@ -40,8 +43,8 @@
   - [Mapping](#mapping)
   - [Operaciones CRUD (API REST)](#operaciones-crud-api-rest)
   - [Ejercicios](#ejercicios-1)
-    - [Ejercicio 1](#ejercicio-1)
-    - [Ejercicio 2](#ejercicio-2)
+    - [Ejercicio 1](#ejercicio1-1)
+    - [Ejercicio 2](#ejercicio2-1)
     - [Ejercicios de paginación](#ejercicios-paginación)
     - [Ejercicios de ordenación](#ejercicios-de-ordenación)
     - [Ejercicios de filtros](#ejercicios-de-filtros)
@@ -50,11 +53,14 @@
     - [Ejercicios de expresiones regulares](#ejercicios-de-expresiones-regulares)
 
 - [Pila ELK](#pila-elk)
+  - [Ejercicios](#ejercicios-2)
+    - [Ejercicio 1](#ejercicio1-2)
+    - [Ejercicio 2](#ejercicio2-2)
 
 - [Ejercicios de Prueba examen](#ejercicios-de-prueba-examen)
-  - [Ejercicio 1](#ejercicio1-1)
-  - [Ejercicio 2](#ejercicio2-1)
-  - [Ejercicio 3](#ejercicio3-1)
+  - [Ejercicio 1](#ejercicio1-3)
+  - [Ejercicio 2](#ejercicio2-3)
+  - [Ejercicio 3](#ejercicio3-3)
 
 ---
 ## Dockerfile
@@ -1083,6 +1089,255 @@ Cuerpo:
 ---
 
 ## Pila ELK
+
+
+### Ejercicios
+
+#### Ejercicio1
+
+Configurar pipeline Logstash:
+- Recibir datos a través de conexiones HTTP en el puerto 9900.
+- Formato: JSON
+- Escribir cada objeto en el índice “logs-ej1” de Elasticsearch.
+- Iniciar Logstash y Elasticsearch.
+- Redirigir puerto 9900 para Logstash
+- Enviar los objetos JSON a Logstash.
+- Mostrados en la diapositiva anterior.
+- Utilizar curl, Postman u otro cliente REST.
+- Verificar que los datos están en el índice “logs-ej1” de
+Elasticsearch.
+
+**Abrir puerto 9900 en docker-compose.yml:**
+
+```yml
+services:
+  logstash:
+    image: docker.elastic.co/logstash/logstash:9.2.1
+    container_name: logstash
+    volumes:
+      - ./pipeline:/usr/share/logstash/pipeline
+    ports:
+      - "9900:9900"
+    depends_on:
+      - elasticsearch
+
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:9.2.1
+    container_name: elasticsearch
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+    volumes:
+      - data01:/usr/share/elasticsearch/data
+    ports:
+      - "9200:9200"
+      - "9300:9300"
+
+  kibana:
+    image: docker.elastic.co/kibana/kibana:9.2.1
+    container_name: kibana
+    ports:
+      - "80:5601"
+    depends_on:
+      - elasticsearch
+
+volumes:
+  data01:
+
+```
+
+**Crea un archivo dentro de tu carpeta pipeline:**
+
+pipeline/
+ └── ej1.conf
+
+Contenido:
+
+```
+input {
+  http {
+    port => 9900
+    codec => json
+  }
+}
+
+output {
+  elasticsearch {
+    hosts => ["http://elasticsearch:9200"]
+    index => "logs-ej1"
+  }
+  stdout {
+    codec => rubydebug
+  }
+}
+
+```
+
+**Enviar los JSON a Logstash:**
+
+```bash 
+curl -X POST http://localhost:9900 \
+  -H "Content-Type: application/json" \
+  -d '{
+        "timestamp": "Nov 28 07:55:04",
+        "device": "server",
+        "process": "kernel",
+        "event-number": "1150.308049",
+        "message": "port 2(veth78fa91b) entered blocking state"
+      }'
+
+```
+
+```bash
+curl -X POST http://localhost:9900 \
+  -H "Content-Type: application/json" \
+  -d '{
+        "timestamp": "Nov 28 07:55:05",
+        "device": "server",
+        "process": "systemd-networkd",
+        "event-number": "730",
+        "message": "Gained IPv6LL"
+      }'
+
+```
+
+**Comprobar en Elasticsearch que los datos se insertaron:**
+
+```bash
+curl -X GET "http://localhost:9200/logs-ej1/_search?pretty"
+```
+
+#### Ejercicio2
+
+Crear un patrón Grok que encaje con el formato de Logs
+mostrados en la diapositiva anterior.
+Configurar pipeline Logstash:
+- Recibir datos como conexiones HTTP al puerto 9901.
+- Utilizar el patrón Grok para parsear cada línea recibida.
+- Escribir cada línea log en el índice “logs-apache” de Elasticsearch.
+- Iniciar Logstash y Elasticsearch con Docker Compose
+- Enviar las líneas de Log a Logstash.
+- Utilizar curl u otro cliente REST.
+- Verificar que los datos se almacenan correctamente en el
+índice ”logs-apache” de Elasticsearch.
+
+
+**Para el ejercicio se ha usado https://grokdebugger.com/ para ver grok.**
+
+**Crear patrón Grok:**
+
+```
+%{IP:ip} - - %{DATE_EU:date} - %{NUMBER:time} %{WORD:method} %{URI:url}
+```
+Pipeline de Logstash (crear archivo en ./pipeline/apache.conf)
+
+pipeline/
+ └── apache.conf
+
+```
+input {
+  http {
+    port => 9901
+    codec => line
+  }
+}
+
+filter {
+  grok {
+    match => {
+      "message" => "%{IP:client_ip} - - %{DATE_EU:date} - %{NUMBER:time} %{WORD:method} %{URI:url}"
+    }
+  }
+
+  mutate {
+    add_field => {
+      "timestamp" => "%{date} %{time}"
+    }
+  }
+
+  date {
+    match => ["timestamp", "dd/MM/YYYY HHmm"]
+    target => "@timestamp"
+  }
+}
+
+output {
+  elasticsearch {
+    hosts => ["http://elasticsearch:9200"]
+    index => "logs-apache"
+  }
+
+  stdout {
+    codec => rubydebug
+  }
+}
+
+```
+
+**docker-compose.yml:**
+
+```yml
+services:
+  logstash:
+    image: docker.elastic.co/logstash/logstash:9.2.1
+    container_name: logstash
+    volumes:
+      - ./pipeline:/usr/share/logstash/pipeline
+    ports:
+      - "9901:9901"
+    depends_on:
+      - elasticsearch
+
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:9.2.1
+    container_name: elasticsearch
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+    ports:
+      - "9200:9200"
+    volumes:
+      - data01:/usr/share/elasticsearch/data
+
+  kibana:
+    image: docker.elastic.co/kibana/kibana:9.2.1
+    container_name: kibana
+    ports:
+      - "80:5601"
+    depends_on:
+      - elasticsearch
+
+volumes:
+  data01:
+
+```
+
+**Enviar líneas al endpoint HTTP de Logstash:**
+
+```bash
+curl -X POST http://localhost:9901 \
+  -H "Content-Type: text/plain" \
+  -d "124.173.67.77 - - 23/07/2016 - 0400 GET http://www.059boss.com/index.php"
+
+curl -X POST http://localhost:9901 \
+  -H "Content-Type: text/plain" \
+  -d "195.182.131.107 - - 23/07/2016 - 0400 GET http://asconprofi.ru/common/proxy.php"
+
+
+curl -X POST http://localhost:9901 \
+  -H "Content-Type: text/plain" \
+  -d "155.94.224.168 - - 23/07/2016 - 0400 GET http://www.daqimeng.com/user/login"
+
+curl -X POST http://localhost:9901 \
+  -H "Content-Type: text/plain" \
+  -d "119.29.32.85 - - 23/07/2016 - 0400 GET http://www.tianx.top"
+
+```
+**Verificar en Elasticsearch que los datos están en logs-apache:**
+
+```bash
+curl -X GET "http://localhost:9200/logs-apache/_search?pretty"
+```
 
 ---
 ## Ejercicios de Prueba examen
