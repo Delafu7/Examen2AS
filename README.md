@@ -954,7 +954,7 @@ Cuerpo:
     "sort": [
         {"age":{ "order" : "asc"}}
     ]
-
+}
 ```
 
 #### Ejercicios de filtros
@@ -1468,7 +1468,7 @@ Cuerpo:
 
 Añadir elementos al índice:
 
-TIPO : **PUT**
+TIPO : **POST**
 
 URI:
 ```
@@ -1486,7 +1486,7 @@ Cuerpo:
 
 ```
 
-TIPO : **PUT**
+TIPO : **POST**
 
 URI:
 ```
@@ -1503,7 +1503,7 @@ Cuerpo:
 
 
 ```
-TIPO : **PUT**
+TIPO : **POST**
 
 URI:
 ```
@@ -1555,16 +1555,15 @@ http://localhost:9200/usuarios/_search
 Cuerpo:
 ```
 {
-   "query": {
-    "match": {
-        "apellido": {
-            "query": "Loepz",
-            "fuzziness":1
-        }
-    }
-   }
+  "query": {
+      "fuzzy": {
+          "apellido": {
+              "value": "Loepz",
+              "fuzziness":2
+          }
+      }
+  }
 }
-
 
 
 ```
