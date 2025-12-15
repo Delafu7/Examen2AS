@@ -3,8 +3,6 @@
 
 ## Índice del repositorio
 
-
-
 - [Dockerfile](#dockerfile)
   - [Estructura básica de un Dockerfile](#estructura-básica-de-un-dockerfile)
   - [Instrucciones más importantes de Dockerfile](#instrucciones-más-importantes-de-dockerfile)
@@ -14,7 +12,7 @@
   - [Comandos básicos de Docker Compose](#comandos-básicos-de-docker-compose)
   - [Ejemplo típico de docker-compose.yml](#ejemplo-típico-de-docker-composeyml)
 
-- [Kubernettes](#kubernettes)
+- [Kubernetes](#kubernetes)
   - [Ejemplo típico: Deployment + Service](#ejemplo-típico-deployment--service)
   - [Explicación de los elementos clave](#explicación-de-los-elementos-clave)
   - [Comandos útiles](#comandos-útiles)
@@ -44,7 +42,7 @@
   - [Operaciones CRUD (API REST)](#operaciones-crud-api-rest)
   - [Ejercicios](#ejercicios-1)
     - [Ejercicio 1](#ejercicio1-1)
-    - [Ejercicio 2](#ejercicio2-1)
+    - [Ejercicio 2](#ejercicio-2)
     - [Ejercicios de paginación](#ejercicios-paginación)
     - [Ejercicios de ordenación](#ejercicios-de-ordenación)
     - [Ejercicios de filtros](#ejercicios-de-filtros)
@@ -53,6 +51,7 @@
     - [Ejercicios de expresiones regulares](#ejercicios-de-expresiones-regulares)
 
 - [Pila ELK](#pila-elk)
+  - [Patrones Grok más usados](#patrones-grok-mas-usados)
   - [Ejercicios](#ejercicios-2)
     - [Ejercicio 1](#ejercicio1-2)
     - [Ejercicio 2](#ejercicio2-2)
@@ -61,6 +60,9 @@
   - [Ejercicio 1](#ejercicio1-3)
   - [Ejercicio 2](#ejercicio2-3)
   - [Ejercicio 3](#ejercicio3-3)
+
+- [Ejercicios de exámenes anteriores](#ejercicios-de-examenes-anteriores)
+
 
 ---
 ## Dockerfile
@@ -958,7 +960,7 @@ Cuerpo:
 #### Ejercicios de filtros
 
 
-** Recuperar los datos de usuarios cuyo estado de residencia sea Los Ángeles (código de estado “LA”) pero que su ciudad de residencia no sea Loretto, y que además su edad sea superior a los 33 años**
+** Recuperar los datos de usuarios cuyo estado de residencia sea Los Ángeles (código de estado “LA”) pero que su ciudad de residencia no sea Loretto, y que además su edad sea superior a los 33 años **
 
 TIPO : **GET**
 
@@ -987,7 +989,7 @@ Cuerpo:
 
 #### Ejercicios de búsquedas difusas
 
-** Utilizar una búsqueda difusa para recuperar los datos de la persona residente en Wyoming, pero utilizando ”Woyming” como término de búsqueda**
+** Utilizar una búsqueda difusa para recuperar los datos de la persona residente en Wyoming, pero utilizando ”Woyming” como término de búsqueda **
 
 TIPO : **GET**
 
@@ -1089,6 +1091,26 @@ Cuerpo:
 ---
 
 ## Pila ELK
+
+
+### Patrones Grok mas usados:
+
+| Patrón         | Descripción                | Ejemplo                      |
+| -------------- | -------------------------- | ---------------------------- |
+| `IP`           | Dirección IP               | `192.168.1.1`                |
+| `HOSTNAME`     | Nombre de host             | `server01`                   |
+| `WORD`         | Palabra sin espacios       | `GET`                        |
+| `NUMBER`       | Número entero o decimal    | `200`, `3.14`                |
+| `INT`          | Número entero              | `404`                        |
+| `DATA`         | Texto libre (no codicioso) | `texto`                      |
+| `GREEDYDATA`   | Texto libre (codicioso)    | `mensaje completo`           |
+| `URI`          | URL                        | `/index.html`                |
+| `URIPATHPARAM` | Ruta + parámetros          | `/index.php?id=1`            |
+| `HTTPDATE`     | Fecha HTTP                 | `10/Oct/2023:13:55:36 +0000` |
+| `DATE_EU`      | Fecha europea              | `23/07/2016`                 |
+| `TIME`         | Hora                       | `13:55:36`                   |
+
+[Probar patrones GROK](https://grokdebugger.com)
 
 
 ### Ejercicios
@@ -1599,4 +1621,189 @@ Comprobar que la petición ha sido correcta:
 
 ```
 curl http://localhost:9200/usuarios/_search?pretty
+```
+
+## Ejercicios de examenes anteriores
+
+#### Ejercicio1
+
+**Dockerfile**
+```Dockerfile
+
+FROM node:slim
+WORKDIR /app
+COPY . /app/
+RUN npm install package.json
+
+```
+
+**workflow.yml:**
+
+```yml
+name: ej1-workflow
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Descargar el codigo
+      uses: actions/checkout@v4
+    - name: Configurar el entorno Node
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+    - name: Pruebas unitarias
+      run: |
+        npm i 
+        npm test
+    - name: Construir la imagen
+      uses: cloudposse/github-action-docker-compose-test-run@main
+      with:
+        file: docker-compose.yml
+        service: webapp
+        command:
+```
+
+### Ejercicio 2
+
+- Obtener los datos de los servidores cuyo precio sea inferior a 8000
+
+
+TIPO : **GET**
+
+URI:
+```
+localhost:9200/servidores/_search?pretty
+```
+
+Cuerpo:
+```json
+
+{
+  "query": {
+    "range": {
+      "precio": {
+        "lt": 8000
+      }
+    }
+  }
+}
+
+```
+- En el indice "servidores" borrar los datos del documento cuyo fabricante es HP
+
+
+
+TIPO : **DELETE**
+
+URI:
+
+```
+localhost:9200/servidores/_search?pretty
+```
+
+Cuerpo:
+
+```json
+
+{
+  "query": {
+    "match": {
+      "fabricante": "HP"
+    }
+  }
+}
+
+```
+
+
+### Ejercicio3
+
+
+**logstash.conf:**
+
+```
+input{
+    http{
+        port => 7000
+    }
+}
+filter{
+    grok{
+        match => { "message" => "%{IP:la_ip} %{WORD:metodo} %{EMAILADDRESS:correo} %{URI:la_url}"}
+    }
+    if [metodo] == "PUT" {
+        drop {}
+    }
+}
+output{
+    elasticsearch{
+        hosts => ["http://elasticsearch:9200"]
+        index => "ej3"
+    }
+}
+```
+
+### Shell ejercicio para peticiones
+
+```shell
+while read line; do
+    curl -XPOST -H "Content-Type: application/json" -d "$line" http://localhost:7000
+    sleep 1
+done < ej3_logs.txt
+
+```
+
+### Ejercicio4
+
+**logstash.conf:**
+```
+input {
+    http_poller {
+        urls => {
+            test1 => {
+                method => get
+                url => "http://104.197.205.136"
+            }
+        }
+        request_timeout => 60
+        schedule => { cron => "* * * * * UTC"}
+        codec => "json"
+    }
+}
+output {
+    stdout {
+        codec => rubydebug
+    }
+}
+```
+
+**workflow.yaml:**
+
+```yaml
+
+name: ej4-workflow
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+    build:
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@v4
+            - name: Instalar logstash
+              run: |
+                wget -qO - https://artifacts.elastic.co/GPG-KEY-elasticsearch | sudo gpg --dearmor -o /usr/share/keyrings/elastic-keyring.gpg
+                sudo apt-get install apt-transport-https
+                echo "deb [signed-by=/usr/share/keyrings/elastic-keyring.gpg] https://artifacts.elastic.co/packages/8.x/apt stable main" | sudo tee -a /etc/apt/sources.list.d/elastic-8.x.list
+                sudo apt-get update && sudo apt-get install logstash
+            - name: Validar el fichero de configuracion
+              run: |
+                sudo /usr/share/logstash/bin/logstash -t -f logstash.conf
+
 ```
