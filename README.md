@@ -3,16 +3,18 @@
 
 ## Índice del repositorio
 
+
+
 - [Dockerfile](#dockerfile)
   - [Estructura básica de un Dockerfile](#estructura-básica-de-un-dockerfile)
   - [Instrucciones más importantes de Dockerfile](#instrucciones-más-importantes-de-dockerfile)
   - [Comandos básicos relacionados](#comandos-básicos-relacionados)
 
-- [Docker Compose](#docker-compose)
+- [Docker compose](#docker-compose)
   - [Comandos básicos de Docker Compose](#comandos-básicos-de-docker-compose)
   - [Ejemplo típico de docker-compose.yml](#ejemplo-típico-de-docker-composeyml)
 
-- [Kubernetes](#kubernetes)
+- [Kubernettes](#kubernettes)
   - [Ejemplo típico: Deployment + Service](#ejemplo-típico-deployment--service)
   - [Explicación de los elementos clave](#explicación-de-los-elementos-clave)
   - [Comandos útiles](#comandos-útiles)
@@ -27,9 +29,12 @@
   - [GitHub Marketplace](#github-marketplace)
   - [Secretos en GitHub Actions](#secretos-en-github-actions)
   - [Ejercicios](#ejercicios)
-    - [Ejercicio 1](#ejercicio1)
-    - [Ejercicio 2](#ejercicio2)
-    - [Ejercicio 3](#ejercicio3)
+    - [Ejercicio1](#ejercicio1)
+    - [Ejercicio2](#ejercicio2)
+    - [Ejercicio3](#ejercicio3)
+  - [Laboratorio](#laboratorio)
+    - [Workflow1](#workflow1)
+    - [Workflow2](#workflow2)
 
 - [Cloud Computing](#cloud-computing)
   - [Tipos de auto-escalado](#tipos-de-auto-escalado)
@@ -41,28 +46,33 @@
   - [Mapping](#mapping)
   - [Operaciones CRUD (API REST)](#operaciones-crud-api-rest)
   - [Ejercicios](#ejercicios-1)
-    - [Ejercicio 1](#ejercicio1-1)
+    - [Ejercicio1](#ejercicio1-1)
     - [Ejercicio 2](#ejercicio-2)
-    - [Ejercicios de paginación](#ejercicios-paginación)
-    - [Ejercicios de ordenación](#ejercicios-de-ordenación)
+    - [Ejercicios paginación](#ejercicios-paginación)
+    - [Ejercicios de Ordenación](#ejercicios-de-ordenación)
     - [Ejercicios de filtros](#ejercicios-de-filtros)
     - [Ejercicios de búsquedas difusas](#ejercicios-de-búsquedas-difusas)
-    - [Ejercicios de prefijos de búsqueda y comodines](#ejercios-de-prefijos-de-busqueda-y-comodines)
+    - [Ejercios de prefijos de busqueda y comodines](#ejercios-de-prefijos-de-busqueda-y-comodines)
     - [Ejercicios de expresiones regulares](#ejercicios-de-expresiones-regulares)
 
 - [Pila ELK](#pila-elk)
-  - [Patrones Grok más usados](#patrones-grok-mas-usados)
+  - [Patrones Grok mas usados](#patrones-grok-mas-usados)
   - [Ejercicios](#ejercicios-2)
-    - [Ejercicio 1](#ejercicio1-2)
-    - [Ejercicio 2](#ejercicio2-2)
+    - [Ejercicio1](#ejercicio1-2)
+    - [Ejercicio2](#ejercicio2-2)
+  - [Laboratorio](#laboratorio-1)
+    - [Analisis de logs usando Beats](#analisis-de-logs-usando-beats)
 
 - [Ejercicios de Prueba examen](#ejercicios-de-prueba-examen)
-  - [Ejercicio 1](#ejercicio1-3)
-  - [Ejercicio 2](#ejercicio2-3)
-  - [Ejercicio 3](#ejercicio3-3)
+  - [Ejercicio1](#ejercicio1-3)
+  - [Ejercicio2](#ejercicio2-3)
+  - [Ejercicio3](#ejercicio3-3)
 
-- [Ejercicios de exámenes anteriores](#ejercicios-de-examenes-anteriores)
-
+- [Ejercicios de examenes anteriores](#ejercicios-de-examenes-anteriores)
+  - [Ejercicio1](#ejercicio1-4)
+  - [Ejercicio 2](#ejercicio-2-1)
+  - [Ejercicio3](#ejercicio3-4)
+  - [Ejercicio4](#ejercicio4)
 
 ---
 ## Dockerfile
@@ -617,6 +627,105 @@ jobs:
           linter: pylint
 
 ```
+
+### Laboratorio
+
+
+#### Workflow1 
+
+El workflow debe dispararse sólo cuando suceda un evento Push en la rama main, funcionar en un runner ubuntu-latest y realizar, al menos, las siguientes tareas:
+- 1) Descargar el código del repositorio.
+- 2) Autenticarse en Docker Hub, construir una imagen con la última versión del código y subirla al repositorio <as-laboratorio8-web>.
+- 3) Autenticarse en Google Cloud. Utilizar la acción “google-github-actions/auth@v3”. Se deben establecer los siguientes parámetros:
+  - project_id: El ID de vuestro proyecto en Google Cloud.
+workload_identity_provider: Debe ser el string URL-grupo, a partir de projects/ Se debe omitir la parte inicial https://iam.googleapis.com.
+  - service_account: Debe ser MAIL-servicio.
+- 4) Configurar Actions para poder utilizar comandos kubectl. Utilizar la acción “google-github-actions/get-gke-credentials@v3”. Se deben establecer sus parámetros “cluster_name” y “location” para indicar el nombre del cluster Kubernetes y la región en la que está creado, respectivamente.
+- 5) Desplegar los objetos Kubernetes en el cluster. Utilizar “kubectl” con los mismos parámetros que se usarían en la línea de comando.
+
+
+```yml
+
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
+
+    steps:
+      # 1) Descargar el código del repositorio
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # 2) Autenticarse en Docker Hub y construir/subir imagen
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Build and push Docker image
+        run: |
+          docker build -t ${{ secrets.DOCKER_USERNAME }}/as-laboratorio8-web:latest .
+          docker push ${{ secrets.DOCKER_USERNAME }}/as-laboratorio8-web:latest
+
+      # 3) Autenticarse en Google Cloud
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v3
+        with:
+          project_id: ${{ secrets.GCP_PROJECT_ID }}
+          workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
+
+      # 4) Configurar kubectl con credenciales del cluster GKE
+      - name: Get GKE credentials
+        uses: google-github-actions/get-gke-credentials@v3
+        with:
+          cluster_name: ${{ secrets.GKE_CLUSTER_NAME }}
+          location: ${{ secrets.GKE_LOCATION }}
+
+      # 5) Desplegar objetos Kubernetes en el cluster
+      - name: Deploy to GKE
+        run: |
+          kubectl apply -f k8s/
+          kubectl rollout restart deployment frontend-web
+
+
+```
+
+#### Workflow2
+
+```yml
+name: CI - Tests
+
+on:
+  push:
+    branches-ignore:
+      - main
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+
+    steps:
+      # 1) Descargar el código del repositorio
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # 2) Ejecutar pruebas con acción de linting
+      - name: Run Python linting
+        uses: advanced-security/python-lint-code-scanning-action@v1
+        with:
+          linter: pylint
+```
 ---
 ## Cloud Computing
 
@@ -954,7 +1063,7 @@ Cuerpo:
     "sort": [
         {"age":{ "order" : "asc"}}
     ]
-}
+
 ```
 
 #### Ejercicios de filtros
@@ -1361,6 +1470,122 @@ curl -X POST http://localhost:9901 \
 curl -X GET "http://localhost:9200/logs-apache/_search?pretty"
 ```
 
+### Laboratorio
+
+**Configurar logstash:**
+
+```conf
+input{
+        tcp{
+            port => 10500
+        }
+    }
+    filter{
+        grok{
+            match => { "message" => "%{MONTH:mes} %{MONTHDAY:dia} %{TIME:hora} %{DATA:maquina} %{DATA:programa} %{GREEDYDATA:servicio} %{GREEDYDATA:mensaje}" }
+        }
+    }
+    output{
+        elasticsearch{
+            hosts => ["http://elasticsearch:9200"]
+            index => "logs-sistema"
+        }
+}
+```
+
+**Configurar el Syslog:**
+
+```
+sudo nano /etc/rsyslog.d/50-default.conf        #Editamos el fichero de logs
+        *.*                             @localhost:10500
+sudo systemctl restart rsyslog.service          #Aplicamos los cambios
+```
+```
+docker compose up -d                            #Levantamos el contenedor de logstash
+
+logger "Hola mundo"                             #Generamos un log
+
+curl -X GET "localhost:9200/logs-sistema/_search?pretty"
+```
+
+#### Analisis de logs usando Beats
+
+**Filebeat:**
+
+```bash
+# Descargar Filebeat
+curl -L -O https://artifacts.elastic.co/downloads/beats/filebeat/filebeat-8.11.1-amd64.deb
+
+# Instalar Filebeat
+sudo dpkg -i filebeat-8.11.1-amd64.deb
+
+# Configurar Filebeat
+sudo nano /etc/filebeat/filebeat.yml
+
+sudo filebeat modules list
+
+sudo filebeat modules enable system
+
+# Configurar system.yml
+sudo nano /etc/filebeat/modules.d/system.yml
+
+# Iniciar Filebeat
+sudo service filebeat start
+```
+
+**Logstash:**
+
+```conf
+    input{
+        beats{
+            port => 5044
+        }
+    }
+    output{
+        elasticsearch{
+            hosts => ["http://elasticsearch:9200"]
+            index => "logs-filebeat"
+        }
+    }
+```
+
+docker-compose.yml:
+
+```yml
+    version: '3'
+    services:
+        logstash:
+            image: docker.elastic.co/logstash/logstash:8.11.1
+            container_name: logstash
+            volumes:
+            - ./pipeline:/usr/share/logstash/pipeline
+            depends_on:
+            - elasticsearch
+            ports:
+            - 5044:5044
+
+        elasticsearch:
+            image: docker.elastic.co/elasticsearch/elasticsearch:8.11.1
+            container_name: elasticsearch
+            environment:
+            - discovery.type=single-node
+            - xpack.security.enabled=false
+            volumes:
+            - data01:/usr/share/elasticsearch/data
+            ports:
+            - 9200:9200
+            - 9300:9300
+
+        kibana:
+            image: docker.elastic.co/kibana/kibana:8.11.1
+            container_name: kibana
+            ports:
+            - 80:5601
+            depends_on:
+            - elasticsearch
+    volumes:
+        data01:
+```
 ---
 ## Ejercicios de Prueba examen
 
@@ -1468,7 +1693,7 @@ Cuerpo:
 
 Añadir elementos al índice:
 
-TIPO : **POST**
+TIPO : **PUT**
 
 URI:
 ```
@@ -1486,7 +1711,7 @@ Cuerpo:
 
 ```
 
-TIPO : **POST**
+TIPO : **PUT**
 
 URI:
 ```
@@ -1503,7 +1728,7 @@ Cuerpo:
 
 
 ```
-TIPO : **POST**
+TIPO : **PUT**
 
 URI:
 ```
@@ -1555,15 +1780,16 @@ http://localhost:9200/usuarios/_search
 Cuerpo:
 ```
 {
-  "query": {
-      "fuzzy": {
-          "apellido": {
-              "value": "Loepz",
-              "fuzziness":2
-          }
-      }
-  }
+   "query": {
+    "match": {
+        "apellido": {
+            "query": "Loepz",
+            "fuzziness":1
+        }
+    }
+   }
 }
+
 
 
 ```
