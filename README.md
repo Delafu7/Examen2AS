@@ -3,8 +3,6 @@
 
 ## Índice del repositorio
 
-
-
 - [Dockerfile](#dockerfile)
   - [Estructura básica de un Dockerfile](#estructura-básica-de-un-dockerfile)
   - [Instrucciones más importantes de Dockerfile](#instrucciones-más-importantes-de-dockerfile)
@@ -13,12 +11,14 @@
 - [Docker compose](#docker-compose)
   - [Comandos básicos de Docker Compose](#comandos-básicos-de-docker-compose)
   - [Ejemplo típico de docker-compose.yml](#ejemplo-típico-de-docker-composeyml)
+  - [Enlaces](#enlaces)
 
 - [Kubernettes](#kubernettes)
   - [Ejemplo típico: Deployment + Service](#ejemplo-típico-deployment--service)
   - [Explicación de los elementos clave](#explicación-de-los-elementos-clave)
   - [Comandos útiles](#comandos-útiles)
   - [Resumen](#resumen)
+  - [Enlaces](#enlaces-1)
 
 - [CI/CD](#cicd)
   - [Ejemplo básico de workflow](#ejemplo-básico-de-workflow)
@@ -35,6 +35,7 @@
   - [Laboratorio](#laboratorio)
     - [Workflow1](#workflow1)
     - [Workflow2](#workflow2)
+  - [Enlaces](#enlaces-2)
 
 - [Cloud Computing](#cloud-computing)
   - [Tipos de auto-escalado](#tipos-de-auto-escalado)
@@ -54,6 +55,7 @@
     - [Ejercicios de búsquedas difusas](#ejercicios-de-búsquedas-difusas)
     - [Ejercios de prefijos de busqueda y comodines](#ejercios-de-prefijos-de-busqueda-y-comodines)
     - [Ejercicios de expresiones regulares](#ejercicios-de-expresiones-regulares)
+  - [Enlaces](#enlaces-3)
 
 - [Pila ELK](#pila-elk)
   - [Patrones Grok mas usados](#patrones-grok-mas-usados)
@@ -62,6 +64,7 @@
     - [Ejercicio2](#ejercicio2-2)
   - [Laboratorio](#laboratorio-1)
     - [Analisis de logs usando Beats](#analisis-de-logs-usando-beats)
+  - [Enlaces](#enlaces-4)
 
 - [Ejercicios de Prueba examen](#ejercicios-de-prueba-examen)
   - [Ejercicio1](#ejercicio1-3)
@@ -223,6 +226,11 @@ volumes:
 | `volumes`     | Raíz           | Definición de volúmenes nombrados        |
 
 
+### Enlaces
+
+- [Dockerfile docu](https://docs.docker.com/reference/dockerfile/)
+- [Docker compose file docu](https://docs.docker.com/reference/compose-file/)
+
 ---
 
 ## Kubernettes
@@ -328,6 +336,14 @@ kubectl delete -f archivo.yml
 - kubectl apply -f archivo.yml para crear o actualizar recursos
 
 - kubectl get pods, kubectl get svc para ver el estado
+
+### Enlaces
+
+- [Pods docu](https://kubernetes.io/docs/concepts/workloads/pods/)
+
+- [Deployment docu](https://kubernetes.io/docs/concepts/workloads/controllers/deployment/) 
+
+- [Kubectl comandos docu](https://kubernetes.io/docs/reference/kubectl/)
 
 ---
 ## CI/CD
@@ -726,6 +742,10 @@ jobs:
         with:
           linter: pylint
 ```
+
+### Enlaces
+
+- [Documentación sintaxis de workflow](https://docs.github.com/es/actions/reference/workflows-and-actions/workflow-syntax)
 ---
 ## Cloud Computing
 
@@ -1197,6 +1217,11 @@ Cuerpo:
 
 
 ```
+
+### Enlaces
+- [Info-General](https://www.elastic.co/docs/reference/elasticsearch/rest-apis/api-examples)
+- [Querydsl](https://www.elastic.co/docs/reference/query-languages/querydsl)
+
 ---
 
 ## Pila ELK
@@ -1586,6 +1611,10 @@ docker-compose.yml:
     volumes:
         data01:
 ```
+
+### Enlaces
+
+- [Info general logstash](https://www.elastic.co/docs/reference/logstash/creating-logstash-pipeline)
 ---
 ## Ejercicios de Prueba examen
 
