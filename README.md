@@ -1922,6 +1922,89 @@ jobs:
 
 ### Ejercicio 2
 
+**Crear un indice "servidores" con la siguientes caracteristicas**
+
+- Campo "fabricante", tipo text
+- Campo "nombre", tipo text
+- Campo "precio", tipo float
+
+```bash
+curl -XPUT "localhost:9200/servidores?pretty" -H 'Content-Type: application/json' -d'
+{
+  "mappings": {
+    "properties": {
+      "fabricante": {
+        "type": "text"
+      },
+      "nombre": {
+        "type": "text"
+      },
+      "precio": {
+        "type": "float"
+      }
+    }
+  }
+}
+'
+```
+
+**Crear un indice "logs" con las siguientes caracteristicas**
+
+```bash
+curl -XPUT "localhost:9200/logs?pretty" -H 'Content-Type: application/json' -d'
+{
+  "mappings": {
+    "properties": {
+      "emisor": {
+        "type": "text"
+      },
+      "fecha": {
+        "type": "date"
+      },
+      "mensaje": {
+        "type": "text"
+      }
+    }
+  }
+}
+'
+```
+
+**Añadir los siguientes documentos al indice "servidores":**
+
+```bash
+curl -XPOST "localhost:9200/servidores/_doc/1?pretty" -H 'Content-Type: application/json' -d'
+{
+  "fabricante": "Dell",
+  "nombre": "PowerEdge R6",
+  "precio": 4200.4
+}
+'
+
+curl -XPOST "localhost:9200/servidores/_doc/2?pretty" -H 'Content-Type: application/json' -d'
+{
+  "fabricante": "Dell",
+  "nombre": "PowerEdge R7",
+  "precio": 7200.7
+}
+'
+
+curl -XPOST "localhost:9200/servidores/_doc/3?pretty" -H 'Content-Type: application/json' -d'
+{
+  "fabricante": "HP",
+  "nombre": "ProLiant RL",
+  "precio": 8110.2
+}
+'
+```
+**Añadir el documento "ej2_logs.json" al indice "logs"**
+
+```bash
+curl -XPUT "localhost:9200/logs/_bulk" -H 'Content-Type: application/json' --data-binary "@ej2_logs.json"
+```
+
+**Cambios interesantes del ejercicio**
+
 - Obtener los datos de los servidores cuyo precio sea inferior a 8000
 
 
