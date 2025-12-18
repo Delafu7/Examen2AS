@@ -879,7 +879,6 @@ Cuerpo:
 
         }
     }
-   }
 }
 ```
 Modificar el campo “año” de Gladiator (ID = 2)
@@ -1810,7 +1809,7 @@ Cuerpo:
 ```
 {
    "query": {
-    "match": {
+    "fuzzy": {
         "apellido": {
             "query": "Loepz",
             "fuzziness":1
